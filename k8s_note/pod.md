@@ -83,3 +83,40 @@ Pod 的设计，是要里面的容器尽可能多地共享 Linux Namespace，仅
 #### Lifecycle
 
 Container Lifecycle Hooks,在容器状态发生变化时触发一系列“钩子”
+
+### Pod生命周期
+
+Pod 生命周期的变化，主要体现在 Pod API 对象的 Status 部分
+
+* Pending
+    ```
+    Pod的YAML文件已经提交给Kubernetes，API对象已经被创建并保存到Etcd，但是该容器因为某些原因不能被顺利创建
+    ```
+* Running
+    ```
+    Pod已经调度成功，并和一个具体的的节点绑定。Pod包含的容器都已经创建成功，且至少有一个正在运行
+    ```
+
+* Succeeded
+    ```
+    Pod中所有的容器都正常运行完毕，且全部退出。
+    多见于一次性任务
+    ```
+* Failed
+    ```
+    Pod中至少有一个容器以不正常状态退出（非0返回码）
+    需要Debug容器应用，查看Pod Events和日志
+    ```
+
+* unknown
+    ```
+    Pod状态无法持续地被kubelet汇报给kube-apiserver
+    有可能是主从节点（Master和Kubelet）间的通信出现了问题
+    ```
+
+Status字段还能再细分出一组Conditions，用于描述造成当前Status的具体原因
+
+* PodScheduled
+* Ready
+* Initialized
+* Unschedulable

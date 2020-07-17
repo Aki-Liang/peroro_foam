@@ -1,8 +1,9 @@
 # Todo
 
-- [x] This is an example of a todo list item that's complete
-- [x] Todo lists are useful for keeping organised and focused
-- [ ] This one is not completed yet
+- [ ] 阅读 $GOPATH/src/k8s.io/kubernetes/vendor/k8s.io/api/core/v1/types.go 里，type Pod struct
+
+
+
 - [ ] You can mark it completed by pressing `Option`+`C` (or `Alt`+`C`) when your cursor is on this line
   - [ ] You can also select multiple lines and mark them all at once!
 - [ ] When you press enter at the end of a line, it adds a new todo item on the next line
