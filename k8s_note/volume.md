@@ -13,6 +13,8 @@
 * Downward API
 * ServiceAccountToken
 
+Secret、ConfigMap，以及 Downward API 这三种 Projected Volume 定义的信息，大多还可以通过环境变量的方式出现在容器里。但是，通过环境变量获取这些信息的方式，不具备自动更新的能力
+
 ### Secret
 
 把Pod想要访问的加密数据存放到Etcd中，然后在Pod的容器里通过挂载Volume的方式访问
@@ -68,3 +70,15 @@ kubelet组件定时维护这些Volume
 * YAML
 
 ### Downward API
+
+让 Pod 里的容器能够直接获取到这个 Pod API 对象本身的信息。
+
+只能获取到Pod里容器进程启动之前就能确定下来的信息
+
+### ServiceAccountToken
+
+Service Account: kubernetes进行权限分配的对象
+
+Service Account的授权信息和文件保存在ServiceAccountToken里
+
+任何运行在Kubernetes集群上的应用都必须使用ServiceAccountToken中的授权信息才能合法访问API Server
