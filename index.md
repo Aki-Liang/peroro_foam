@@ -1,6 +1,6 @@
 # Index
 
-### [[k8s_index]] kubernetis笔记
+### [[k8s_index]] kubernetes笔记
 ### [[mongo_index]] mongodb笔记
 ### [[golang_index]] go语言笔记
 
