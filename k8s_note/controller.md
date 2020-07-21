@@ -113,8 +113,37 @@ deployment.apps/nginx-deployment scaled
 3. Deployment Controller 又将旧的 ReplicaSet所控制的旧 Pod 副本数减少一个，即：“水平收缩”成两个副本。
 4. 如此交替进行
 
+
 好处
 
 ```
 在升级刚开始的时候，集群里只有 1 个新版本的 Pod。如果这时，新版本 Pod 有问题启动不起来，那么“滚动更新”就会停止，从而允许开发和运维人员介入。而在这个过程中，由于应用本身还有两个旧版本的 Pod 在线，所以服务并不会受到太大的影响。
+
+一定要使用 Pod 的 Health Check 机制检查应用的运行状态，而不是简单地依赖于容器的 Running 状态。要不然的话，虽然容器已经变成 Running 了，但服务很有可能尚未启动，“滚动更新”的效果也就达不到了
 ```
+
+为了进一步保证服务的连续性，Deployment Controller 还会确保，在任何时间窗口内，只有指定比例的 Pod 处于离线状态。同时，它也会确保，在任何时间窗口内，只有指定比例的新 Pod 被创建出来。这两个比例的值都是可以配置的，默认都是 DESIRED 值的 25%
+
+这个策略，是 Deployment 对象的一个字段，名叫 RollingUpdateStrategy
+
+```
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+...
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+```
+
+maxSurge 指定的是除了 DESIRED 数量之外，在一次“滚动”中，Deployment 控制器还可以创建多少个新 Pod
+ maxUnavailable 指的是，在一次“滚动”中，Deployment 控制器可以删除多少个旧 Pod
+
+这两个配置还可以用百分比形式来表示，比如：maxUnavailable=50%，指的是最多可以一次删除“50%*DESIRED 数量”个 Pod
