@@ -82,3 +82,5 @@ Service Account: kubernetes进行权限分配的对象
 Service Account的授权信息和文件保存在ServiceAccountToken里
 
 任何运行在Kubernetes集群上的应用都必须使用ServiceAccountToken中的授权信息才能合法访问API Server
+
+Kubernetes提供了一个default Service Account，任何一个运行在Kubernetes里的Pod都可以直接使用这个默认Service Account无需显式声明挂载。任意一个运行在 Kubernetes 集群里的 Pod都已经自动声明一个类型是Secret，名字是default-token-xxxx 的 Volume，自动挂载在每个容器的一个固定目录上。
