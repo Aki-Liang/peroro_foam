@@ -2,6 +2,7 @@
 
 ### Centos 添加用户
 添加普通用户
+
 ```
     [root@server ~]# useradd admin        //添加一个名为admin的用户
     [root@server ~]# passwd admin         //修改密码
@@ -32,3 +33,16 @@ admin:x:500:0:admin:/home/admin:/bin/bash
 admin:x:0:0:admin:/home/admin:/bin/bash
 
 修改后保存，用新账户登录后，直接获取的就是root帐号的权限。
+
+
+### Centos挂载exfat硬盘
+1.Install the nux repo for CentOS 7
+yum install -y http://li.nux.ro/download/nux/dextop/el7/x86_64/nux-dextop-release-0-5.el7.nux.noarch.rpm
+
+yum install exfat-utils fuse-exfat
+装这两包
+3.插U盘，cat /proc/partitions, 看看是否挂载成功
+
+4.cd /media
+mkdir udisk
+mount -t exfat /dev/sdbX(X是你的盘号） udisk
