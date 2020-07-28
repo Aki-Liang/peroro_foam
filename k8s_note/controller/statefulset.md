@@ -8,6 +8,8 @@ StatefulSet 其实就是一种特殊的 Deployment,它的每个 Pod 都被编号
 
 有了这个编号，StatefulSet 使用 Kubernetes 里的两个标准功能：Headless Service 和 PV/PVC，实现了对 Pod 的拓扑状态和存储状态的维护
 
+StatefulSet 可以说是 Kubernetes 项目中最为复杂的编排对象
+
 ## StatefulSet状态抽象
 
 ### 拓扑状态
