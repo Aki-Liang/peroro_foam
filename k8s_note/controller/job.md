@@ -42,3 +42,39 @@ Job Controller 重新创建 Pod 的间隔是呈指数增加的，即下一次重
 
 ### 常见应用场景
 
+1. 外部管理器 +Job 模板。
+2. 拥有固定任务数目的并行 Job。
+3. 指定并行度（parallelism），但不设置固定的 completions 的值。
+
+## CronJob
+
+```
+例
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: hello
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - date; echo Hello from the Kubernetes cluster
+          restartPolicy: OnFailure
+```
+
+由于定时任务的特殊性，很可能某个 Job 还没有执行完，另外一个新 Job 就产生了。可以通过 spec.concurrencyPolicy 字段来定义具体的处理策略
+
+1. concurrencyPolicy=Allow，这也是默认情况，这意味着这些 Job 可以同时存在；
+2. concurrencyPolicy=Forbid，这意味着不会创建新的 Pod，该创建周期被跳过；
+3. concurrencyPolicy=Replace，这意味着新产生的 Job 会替换旧的、没有执行完的 Job。
+   
+如果某一次 Job 创建失败，这次创建就会被标记为“miss”。当在指定的时间窗口内，miss 的数目达到 100 时， CronJob 会停止再创建这个 Job
+这个时间窗口，可以由 spec.startingDeadlineSeconds 字段指定。比如 startingDeadlineSeconds=200，意味着在过去 200 s 里，如果 miss 的数目达到了 100 次，这个 Job 就不会被创建执行了
