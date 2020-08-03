@@ -68,4 +68,8 @@ DaemonSet控制器直接操作Pod，没有ReplicaSet对象。
 
     使用ControllerRevision API对象
 
-    ControllerRevision 对象实际上是在 Data 字段保存了该版本对应的完整的 DaemonSet 的 API 对象。并且，在 Annotation 字段保存了创建这个对象所使用的 kubectl 命令
+ControllerRevision 对象实际上是在 Data 字段保存了该版本对应的完整的 DaemonSet 的 API 对象。并且，在 Annotation 字段保存了创建这个对象所使用的 kubectl 命令
+
+回滚操作实际上相当于读取到了 Revision=指定版本的 ControllerRevision 对象保存的 Data 字段。而这个 Data 字段里保存的信息，就是 Revision=指定版本时这个 DaemonSet 的完整 API 对象
+然后使用这个历史API对象对现有DaemonSet 做一次 PATCH 操作（等价于执行一次 kubectl apply -f “旧的 DaemonSet 对象”），从而把这个 DaemonSet“更新”到一个旧版本
+执行完成后Revision加1
