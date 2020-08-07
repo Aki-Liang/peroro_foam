@@ -101,8 +101,13 @@ metadata:
 
 ### 预定义给用户使用的ClusterRole
 
-* cluster-admin；
+* cluster-admin； //整个K8S中的最高权限
 * admin；
 * edit；
 * view。
+
+
+# 思考题
+
+如何为所有 Namespace 下的默认 ServiceAccount（default ServiceAccount），绑定一个只读权限的 Role 呢？请提供 ClusterRoleBinding（或者 RoleBinding）的 YAML 文件。
 
