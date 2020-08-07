@@ -142,3 +142,21 @@ parameters:
     why：
     通过这样将 Volume 的处理同 kubelet 的主循环解耦，Kubernetes 就避免了这些耗时的远程挂载操作拖慢 kubelet 的主控制循环，进而导致 Pod 的创建效率大幅下降的问题
     kubelet 的一个主要设计原则，就是它的主控制循环绝对不可以被 block
+
+
+## 总结
+
+![StorageClass](./storage.png)
+
+* PVC 描述的，是 Pod 想要使用的持久化存储的属性，比如存储的大小、读写权限等。
+* PV 描述的，则是一个具体的 Volume 的属性，比如 Volume 的类型、挂载目录、远程存储服务器地址等。
+* StorageClass 的作用，是充当 PV 的模板。只有同属于一个 StorageClass 的 PV 和 PVC，才可以绑定在一起。
+
+StorageClass 的另一个重要作用，是指定 PV 的 Provisioner（存储插件）
+
+如果存储插件支持 Dynamic Provisioning ，Kubernetes 就可以自动创建 PV 了
+
+
+## 思考题 
+
+在了解了 PV、PVC 的设计和实现原理之后，你是否依然觉得它有“过度设计”的嫌疑？或者，你是否有更加简单、足以解决你 90% 需求的 Volume 的用法？
