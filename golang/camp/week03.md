@@ -67,11 +67,17 @@ func ListDirectory(dir string, fn func(string))
 ```
 * filepath.WalkDir的模型，如果函数启动groutine则必须向调用者提供显示停止该goroutine的方法
 
-#### Never start a goroutine without knowing when it will stop
+#### Never start a goroutine without knowing when it will stop(不要开启一个不知道何时结束的goroutine)
 
-
-
+* 使用sync.WaitGroup来追踪每一个创建的goroutine
+* 使用golang.org/x/sync/errgroup来追踪创建的goroutine和运行结果
+* 使用context处理超时
+  
 ## Memory model
+
+https://golang.org/ref/mem
+
+### Happen-Before
 
 ## Package sync
 
