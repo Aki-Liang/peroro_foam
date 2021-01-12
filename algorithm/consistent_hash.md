@@ -35,7 +35,7 @@ server := serverList[hash(key) % N]
 
 * 节点总数发生变化时，基本上所有的key都会被映射到错误的节点
 
-## Ring-based Consistent Hashing
+## 期待的哈希算法
 
 * 当节点发生变化，只有1/N的key需要迁移
 ```
@@ -48,9 +48,6 @@ server := serverList[hash(key) % N]
     
 * 如非必要不要移动key
 
-在实践中，每个节点都可以在哈希环上出现多次。多出来的节点被称为虚节点（"virtual nodes"/"vnodes"），这种做法可以减少节点负载差异。而且借助虚节点可以为不同的节点分配不同数量的key
-
-
 ### 论文
 
 1997年
@@ -60,6 +57,34 @@ server := serverList[hash(key) % N]
 * [Ketama memcached client](https://www.last.fm/user/RJ/journal/2007/04/10/rz_libketama_-_a_consistent_hashing_algo_for_memcache_clients)
 
 * [Dynamo: Amazon’s Highly Available Key-value Store](https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf)
+
+### Ring-based Consistent Hashing
+
+* 在实践中，每个节点都可以在哈希环上出现多次。多出来的节点被称为虚节点（"virtual nodes"/"vnodes"）。这种做法可以减少节点负载差异，而且借助虚节点可以为不同的节点分配不同数量的key
+* 简单易懂
+
+然而ring hash算法的节点负载分布依旧不够均匀。在每个节点创建100个vnodes的情况下，负载的标准偏差约为10%。存储桶大小的99％置信区间为平均负载的0.76至1.28。这种可变性导致预估容量变得棘手。将每个节点的vnodes增加到1000个可以将标准偏差降低到3.2%左右，且将99%置信区间缩小到0.92-1.09之间。但是这种做法带来了更多的内存和搜索节点的开销，1000个vnodes大概需要4MB，搜索算法（二分查找）时间复杂度为O(log n)，而且在没有缓存竞争的时候也无法命中高速缓存
+
+
+### Jump Hash
+
+2014年Google发布论文[A Fast, Minimal Memory, Consistent Hash Algorithm](https://arxiv.org/abs/1406.2294)
+
+解决Ring Hash的两个缺点
+* 没有内存开销
+* bucket标准偏差为0.000000764%，99％置信区间为0.99999998至1.00000002
+
+优点
+* 快，搜索算法时间复杂度O(ln n)
+* 计算完全在寄存器中完成，不会有缓存未命中的开销
+
+
+
+
+
+
+
+
 ## 参考资料
 
 [Consistent Hashing: Algorithmic Tradeoffs](https://medium.com/@dgryski/consistent-hashing-algorithmic-tradeoffs-ef6b8e2fcae8)
