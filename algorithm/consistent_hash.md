@@ -128,7 +128,24 @@ server := serverList[hash(key) % N]
 
 详细: [Maglev: A Fast and Reliable Software Network Load Balancer](https://blog.acolyer.org/2016/03/21/maglev-a-fast-and-reliable-software-network-load-balancer/)
 
+## 负载均衡
 
+可以使用一致性哈希来做负载均衡，但是根据算法的不同最终结果不一定比随机算法好
+
+谷歌提供两种可以用于负载均衡的一致性哈希算法。
+
+
+2016年Google发布论文[Consistent Hashing with Bounded Loads](https://ai.googleblog.com/2017/04/consistent-hashing-with-bounded-loads.html)
+
+
+Google SRE book 第20章“Load Balancing in the Datacenter”概述了“deterministic subsetting”算法。 实现： github.com/dgryski/go-subset
+
+亚马逊发布的类似算法[“shuffle sharding”](https://aws.amazon.com/blogs/architecture/shuffle-sharding-massive-and-magical-fault-isolation/)
+
+### 负载均衡视频资料
+
+[Load Balancing Is Impossible](https://www.youtube.com/watch?v=kpvbOzHUakA) by Tyler McMullen
+[Predictive Load-Balancing: Unfair But Faster & More Robust](https://www.youtube.com/watch?v=6NdxUY1La2I) by Steve Gury
 
 ## 参考资料
 
