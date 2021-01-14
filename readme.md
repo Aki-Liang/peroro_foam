@@ -9,7 +9,7 @@
 - [[linux_index]]
 - [[redis_index]]
 - [[interview]]
-- [[algorithm]]
+- [[algorithm]] 算法笔记
 
 
 
