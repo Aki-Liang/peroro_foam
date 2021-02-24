@@ -357,7 +357,158 @@ func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool)
 * 当缓冲区存在数据时，从Channel的缓冲区中接收数据
 * 当缓冲区中不存在数据时，等待其他Goroutine向Channel发送数据
 
+### 直接接收
 
+Channel的sendq队列中包含处于等待状态的Goroutine时，取出队列头等待的Goroutine，调用runtime.recv函数
+
+```
+    if sg := c.sendq.dequeue(); sg != nil {
+		recv(c, sg, ep, func() { unlock(&c.lock) }, 3)
+		return true, true
+	}
+```
+
+```
+func recv(c *hchan, sg *sudog, ep unsafe.Pointer, unlockf func(), skip int) {
+	if c.dataqsiz == 0 {
+		if ep != nil {
+			recvDirect(c.elemtype, sg, ep)
+		}
+	} else {
+		qp := chanbuf(c, c.recvx)
+		if ep != nil {
+			typedmemmove(c.elemtype, ep, qp)
+		}
+		typedmemmove(c.elemtype, qp, sg.elem)
+		c.recvx++
+		c.sendx = c.recvx // c.sendx = (c.sendx+1) % c.dataqsiz
+	}
+	gp := sg.g
+	gp.param = unsafe.Pointer(sg)
+	goready(gp, skip+1)
+}
+```
+
+recv函数会根据缓冲区的大小分别处理不同的情况
+* Channel不存在缓冲区的情况
+    1. 调用recvDirect将Channel发送队列中Goroutine存储的elem数据拷贝到目标内存地址中
+* Channel存在缓冲区的情况
+    1. 将队列中的数据拷贝到接收方的内存地址
+    2. 将发送方队列头的数据拷贝到缓冲区中，释放一个阻塞的发送方
+
+最后都会调用goready将当前处理器的runnext设置成发送数据的Goroutine，在调度器下一次调度时将阻塞的发送方唤醒
+
+
+### 缓冲区
+
+Channel缓冲区中已经包含数据时，从Channel中接收数据会直接从缓冲区中recvx索引位置取出数据进行处理
+
+```
+func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool) {
+	...
+	if c.qcount > 0 {
+		qp := chanbuf(c, c.recvx)
+		if ep != nil {
+			typedmemmove(c.elemtype, ep, qp)
+		}
+		typedmemclr(c.elemtype, qp)
+		c.recvx++
+		if c.recvx == c.dataqsiz {
+			c.recvx = 0
+		}
+		c.qcount--
+		return true, true
+	}
+	...
+}
+```
+
+如果接收数据的内存地址不为空，则会使用typememmove将缓冲区的数据拷贝到内存中，清除队列中的数据并完成收尾工作
+
+收尾工作包括递增recvx（循环队列，超过Channel容量时将其重置归零），还会减少qcount计数器并释放持有的Channel的锁
+
+### 阻塞接收
+
+Channel的发送队列不存在等待的Goroutine且缓冲区中也不存在任何数据时，从管道中接收数据的操作会变成阻塞的（与select语句结社使用时就可能会食道非阻塞的接收操作）
+
+```
+func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool) {
+	...
+	if !block {
+		unlock(&c.lock)
+		return false, false
+	}
+
+	gp := getg()
+	mysg := acquireSudog()
+	mysg.elem = ep
+	gp.waiting = mysg
+	mysg.g = gp
+	mysg.c = c
+	c.recvq.enqueue(mysg)
+	goparkunlock(&c.lock, waitReasonChanReceive, traceEvGoBlockRecv, 3)
+
+	gp.waiting = nil
+	closed := gp.param == nil
+	gp.param = nil
+	releaseSudog(mysg)
+	return true, !closed
+}
+```
+
+在该场景下会使用sudog将当前Goroutine包装成一个处于等待状态的Goroutine并将其加入到接收队列中
+
+完成入队之后，上述代码还会调用goparkunlock立刻厨房Goroutine的调度，让出处理器的使用权并等待调度器的调度
+
+## 关闭管道
+
+编译器会将用于关闭管道的close关键字转换成OCLOSE节点以及runtime.closechan函数，当关闭的Channel是一个空指针或者已关闭的Channel时，GO语言运行时会直接崩溃并报出异常
+
+```
+func closechan(c *hchan) {
+	if c == nil {
+		panic(plainError("close of nil channel"))
+	}
+
+	lock(&c.lock)
+	if c.closed != 0 {
+		unlock(&c.lock)
+		panic(plainError("close of closed channel"))
+	}
+    ...
+    
+    c.closed = 1
+
+	var glist gList
+	for {
+		sg := c.recvq.dequeue()
+		if sg == nil {
+			break
+		}
+		if sg.elem != nil {
+			typedmemclr(c.elemtype, sg.elem)
+			sg.elem = nil
+		}
+		gp := sg.g
+		gp.param = nil
+		glist.push(gp)
+	}
+
+	for {
+		sg := c.sendq.dequeue()
+		...
+	}
+	for !glist.empty() {
+		gp := glist.pop()
+		gp.schedlink = 0
+		goready(gp, 3)
+	}
+}
+```
+
+closechan函数会将recvq和sendq两个队列中的数据加入到Goroutine列表gList中，于此同时该函数会清除所有sudog上未被处理的元素
+
+在函数的最后会为所有被阻塞的Groutine调用goready触发调度
 
 
 -----
